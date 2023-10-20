@@ -11,7 +11,7 @@ import "time"
 // ExpBackoffOpts
 //	Struct to initialize the exponential backoff
 type ExpBackoffOpts struct {
-	//	TimeoutInMilliseconds: the initial timeout
+	// TimeoutInMilliseconds: the initial timeout
 	TimeoutInMilliseconds int
 	// MaxRetries: the total amount of retries
 	MaxRetries *int // optional field, use a pointer
@@ -57,7 +57,6 @@ func NewExponentialBackoffStrat [T comparable](opts ExpBackoffOpts) *Exponential
 }
 
 // PerformBackoff
-//
 //	Pass in a function that returns type T, which will be our operation
 //	If success:
 //		Return the response
