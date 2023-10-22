@@ -99,7 +99,7 @@ func (expStrat *ExponentialBackoffStrat[T]) Reset() {
 }
 
 // generateJitter
-//	Add randomness to the timeout period
+//	Add randomness to the timeout period, which is either +/- value in range of 25% of the current timeout.
 //
 // Returns:
 //	The random value for the jitter
