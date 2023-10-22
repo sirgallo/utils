@@ -12,7 +12,7 @@ import "time"
 //	Struct to initialize the exponential backoff
 type ExpBackoffOpts struct {
 	// TimeoutInMilliseconds: the initial timeout
-	TimeoutInMilliseconds int
+	TimeoutInMicroseconds int
 	// MaxRetries: the total amount of retries
 	MaxRetries *int // optional field, use a pointer
 }
@@ -50,8 +50,8 @@ func NewExponentialBackoffStrat [T comparable](opts ExpBackoffOpts) *Exponential
 
 	return &ExponentialBackoffStrat[T]{
 		depth: 1, 
-		initialTimeout: opts.TimeoutInMilliseconds,
-		currentTimeout: opts.TimeoutInMilliseconds,
+		initialTimeout: opts.TimeoutInMicroseconds,
+		currentTimeout: opts.TimeoutInMicroseconds,
 		maxRetries: &maxRetries,
 	}
 }
@@ -82,7 +82,7 @@ func (expStrat *ExponentialBackoffStrat[T]) PerformBackoff(operation func() (T, 
 		res, err := operation()
 		if err == nil { return res, nil }
 
-		time.Sleep(time.Duration(expStrat.currentTimeout) * time.Millisecond)
+		time.Sleep(time.Duration(expStrat.currentTimeout) * time.Microsecond)
 		expStrat.currentTimeout = int(math.Pow(float64(2), float64(expStrat.depth - 1))) * expStrat.currentTimeout
 		expStrat.depth++
 	}
