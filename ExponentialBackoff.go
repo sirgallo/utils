@@ -1,7 +1,6 @@
 package utils
 
 import "errors"
-import "math"
 import "math/rand"
 import "time"
 
@@ -85,7 +84,7 @@ func (expStrat *ExponentialBackoffStrat[T]) PerformBackoff(operation func() (T, 
 			jitter := expStrat.generateJitter()
 			time.Sleep(time.Duration(expStrat.currentTimeout + jitter) * time.Nanosecond)
 			
-			expStrat.currentTimeout = int(math.Pow(float64(2), float64(expStrat.depth - 1))) * expStrat.currentTimeout
+			expStrat.currentTimeout = expStrat.currentTimeout << (expStrat.depth - 1)
 			expStrat.depth++
 		} else { return res, nil }
 	}
