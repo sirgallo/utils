@@ -2,6 +2,7 @@ package utils
 
 import "errors"
 import "math"
+import "math/rand"
 import "time"
 
 
@@ -12,7 +13,7 @@ import "time"
 //	Struct to initialize the exponential backoff
 type ExpBackoffOpts struct {
 	// TimeoutInMilliseconds: the initial timeout
-	TimeoutInMicroseconds int
+	TimeoutInNanosecs int
 	// MaxRetries: the total amount of retries
 	MaxRetries *int // optional field, use a pointer
 }
@@ -50,8 +51,8 @@ func NewExponentialBackoffStrat [T comparable](opts ExpBackoffOpts) *Exponential
 
 	return &ExponentialBackoffStrat[T]{
 		depth: 1, 
-		initialTimeout: opts.TimeoutInMicroseconds,
-		currentTimeout: opts.TimeoutInMicroseconds,
+		initialTimeout: opts.TimeoutInNanosecs,
+		currentTimeout: opts.TimeoutInNanosecs,
 		maxRetries: &maxRetries,
 	}
 }
@@ -80,11 +81,13 @@ func (expStrat *ExponentialBackoffStrat[T]) PerformBackoff(operation func() (T, 
 		}
 
 		res, err := operation()
-		if err == nil { return res, nil }
-
-		time.Sleep(time.Duration(expStrat.currentTimeout) * time.Microsecond)
-		expStrat.currentTimeout = int(math.Pow(float64(2), float64(expStrat.depth - 1))) * expStrat.currentTimeout
-		expStrat.depth++
+		if err != nil {
+			jitter := expStrat.generateJitter()
+			time.Sleep(time.Duration(expStrat.currentTimeout + jitter) * time.Nanosecond)
+			
+			expStrat.currentTimeout = int(math.Pow(float64(2), float64(expStrat.depth - 1))) * expStrat.currentTimeout
+			expStrat.depth++
+		} else { return res, nil }
 	}
 }
 
@@ -93,4 +96,14 @@ func (expStrat *ExponentialBackoffStrat[T]) PerformBackoff(operation func() (T, 
 func (expStrat *ExponentialBackoffStrat[T]) Reset() {
 	expStrat.depth = 1
 	expStrat.currentTimeout = expStrat.initialTimeout
+}
+
+// generateJitter
+//	Add randomness to the timeout period
+//
+// Returns:
+//	The random value for the jitter
+func (expStrat *ExponentialBackoffStrat[T]) generateJitter() int {
+	n := expStrat.currentTimeout / 4
+	return rand.Intn(2 * n + 1) - n
 }
