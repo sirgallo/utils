@@ -74,21 +74,18 @@ func NewExponentialBackoffStrat [T comparable](opts ExpBackoffOpts) *Exponential
 // Returns:
 //	Either a response after successful retries, or an error if max retries have been met
 func (expStrat *ExponentialBackoffStrat[T]) PerformBackoff(operation func() (T, error)) (T, error) {
-	if expStrat.depth > *expStrat.maxRetries && *expStrat.maxRetries != DefaultMaxRetries { 
-		return GetZero[T](), errors.New("process reached max retries on exponential backoff") 
-	}
+	for {
+		if expStrat.depth > *expStrat.maxRetries && *expStrat.maxRetries != DefaultMaxRetries { 
+			return GetZero[T](), errors.New("process reached max retries on exponential backoff") 
+		}
 
-	res, err := operation()
-	
-	if err != nil { 
+		res, err := operation()
+		if err == nil { return res, nil }
+
 		time.Sleep(time.Duration(expStrat.currentTimeout) * time.Millisecond)
 		expStrat.currentTimeout = int(math.Pow(float64(2), float64(expStrat.depth - 1))) * expStrat.currentTimeout
 		expStrat.depth++
-		
-		return expStrat.PerformBackoff(operation) 
 	}
-
-	return res, nil
 }
 
 // Reset
